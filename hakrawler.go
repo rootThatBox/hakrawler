@@ -29,7 +29,7 @@ var headers map[string]string
 
 // Thread safe map
 var sm sync.Map
-
+var inputnames []string
 func main() {
 	inside := flag.Bool("i", false, "Only crawl inside path")
 	threads := flag.Int("t", 8, "Number of threads to utilise.")
@@ -44,8 +44,7 @@ func main() {
 	unique := flag.Bool(("u"), false, "Show only unique urls.")
 	proxy := flag.String(("proxy"), "", "Proxy URL. E.g. -proxy http://127.0.0.1:8080")
 	timeout := flag.Int("timeout", -1, "Maximum time to crawl each URL from stdin, in seconds.")
-	disableRedirects := flag.Bool("dr", false, "Disable following HTTP redirects.")
-
+	disableRedirects := flag.Bool("dr", false, "Disable following HTTP redirects.   \n \n The wordlist of parameter names is @ /user/home/YOU/list/hakrawler_parameters.txt")
 	flag.Parse()
 
 	if *proxy != "" {
@@ -142,6 +141,40 @@ func main() {
 				printResult(e.Attr("action"), "form", *showSource, *showWhere, *showJson, results, e)
 			})
 
+                        c.OnHTML("input[name]", func(e *colly.HTMLElement) {
+
+var inputname string 
+inputname =  "?&"+e.Attr("name")
+                                printResult(inputname, "input", *showSource, *showWhere, *showJson, results, e)
+ inputnames = append(inputnames , e.Attr("name"))                      
+//fmt.Println(inputnames) 
+writewordlist(e.Attr("name"))
+})
+
+
+
+
+
+
+
+/* file, err := os.OpenFile("output.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
+var i int
+
+    // Append data to the file
+    if _, err := file.WriteString(inputnames[i]); err != nil {
+i+=1
+        log.Fatal(err)
+    }
+*/
+    // Confirm that data was written to the file
+
+
+                    //    inputnames = append(e.Attr("name")
+//fmt.Println(inputnames)
 			// add the custom headers
 			if headers != nil {
 				c.OnRequest(func(r *colly.Request) {
@@ -280,6 +313,83 @@ func printResult(link string, sourceName string, showSource bool, showWhere bool
 		results <- result
 	}
 }
+
+
+
+
+
+
+
+func writewordlist(paramname string ){
+    
+
+
+dirname, err := os.UserHomeDir()
+wordlistpath := dirname + "/list/hakrawler_parameters.txt"
+    
+file, err := os.OpenFile(wordlistpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal(err)
+    } 
+
+  
+    defer file.Close() 
+var i int
+        
+    // Append data to the file
+    if _, err := file.WriteString(paramname + "\n"); err != nil {
+i+=1    
+        log.Fatal(err)
+    }   
+
+removedupes(wordlistpath)
+        
+}
+
+
+
+func removedupes(filepath string){
+    file, err := os.Open(filepath)
+    if err != nil {
+        panic(err)
+    }
+    defer file.Close()
+
+    // Read the contents of the file into a slice of strings
+    scanner := bufio.NewScanner(file)
+    var lines []string
+    for scanner.Scan() {
+        lines = append(lines, scanner.Text())
+    }
+
+    // Create a map to store the unique strings
+    unique := make(map[string]bool)
+
+    // Iterate over the slice of strings and add each string to the map as a key with a value of true
+    for _, line := range lines {
+        unique[line] = true
+    }
+
+    // Create a new slice of strings and append the keys of the map to it
+    var uniqueLines []string
+    for line := range unique {
+        uniqueLines = append(uniqueLines, line)
+    }
+
+    // Write the contents of the new slice to the file
+    output, err := os.Create(filepath)
+    if err != nil {
+        panic(err)
+    }
+    defer output.Close()
+
+    for _, line := range uniqueLines {
+        fmt.Fprintln(output, line)
+    }
+
+}
+
+
 
 // returns whether the supplied url is unique or not
 func isUnique(url string) bool {
