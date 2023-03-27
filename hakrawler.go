@@ -27,6 +27,7 @@ type Result struct {
 
 var headers map[string]string
 
+
 // Thread safe map
 var sm sync.Map
 var inputnames []string
@@ -244,6 +245,9 @@ i+=1
 		fmt.Fprintln(w, res)
 	}
 
+dirname, err := os.UserHomeDir()
+wordlistpath := dirname + "/list/hakrawler_parameters.txt"
+removedupes(wordlistpath)
 }
 
 // parseHeaders does validation of headers input and saves it to a formatted map.
@@ -342,7 +346,7 @@ i+=1
         log.Fatal(err)
     }   
 
-removedupes(wordlistpath)
+//removedupes(wordlistpath)
         
 }
 
